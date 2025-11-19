@@ -3,7 +3,6 @@ import numpy as np
 import os
 import librosa
 import csv
-from pathlib import Path
 
 from pydub.utils import make_chunks
 
@@ -99,6 +98,7 @@ def process_dir(base_dir):
     data = []
 
     for directory in directories:
+        print("Processing directory", directory)
         person_dir = os.path.join(base_dir, directory)
 
         if not os.path.isdir(person_dir):
@@ -108,6 +108,7 @@ def process_dir(base_dir):
 
         raw_dir = os.path.join(person_dir, 'raw')
         for entry in os.listdir(raw_dir):
+            print("Processing entry", entry)
             clean_audio(os.path.join(raw_dir, entry), os.path.join(person_dir, 'processed'))
 
         processed_dir = os.path.join(person_dir, 'processed')
