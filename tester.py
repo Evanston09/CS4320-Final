@@ -75,6 +75,7 @@ def main():
         predictions[speaker] = prob
         print(f"{speaker}: {prob:.4f} ({prob*100:.2f}%)")
 
+    print(predictions)
     predicted_speaker = max(predictions, key=predictions.get)
     confidence = predictions[predicted_speaker]
 

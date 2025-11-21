@@ -93,14 +93,14 @@ print(df.columns)
 m = len(df.index)
 n = len(df.columns)
 print("n=", n, "m=", m)
-X, y_dict, speakers = prepare_one_vs_all(s_df, "speaker")
+X, y_dict, speakers = prepare_one_vs_all(s_df, yCol)
 print("Speakers:", speakers)
 print(X)
 
 input()
 # TRAIN THE SYSTEM  (20000, 0.0000006)
-iterations = 2000000
-alpha = 0.001
+iterations = 200000
+alpha = 0.01
 
 weights_dict = {}
 
