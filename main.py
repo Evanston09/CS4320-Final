@@ -9,7 +9,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-# Create functions
+def calc_stats(tp, tn, fp, fn):
+    accuracy = (tp + tn)/(tn+tp+fn+fp)
+    precision = (tp)/(tp+fp)
+    recall = (tp)/(tp+fn)
+    f1 = (2/((1/precision)+(1/recall)))
+    return accuracy, precision, recall, f1
+
+
 # Logistic Regression Hypothesis Function
 def hwX(w, X):
     return 1 / (1 + np.exp(-X @ w))
@@ -68,83 +75,164 @@ def prepare_one_vs_all(df, yCol):
     return X, y_dict, speakers
 
 
-def get_mean_std(df, dropcol):
-    tdf = df.drop(dropcol, axis=1)
-    means = tdf.mean()
-    stds = tdf.std()
-    return means, stds
+def train_on_everything():
+    df = pd.read_csv("data/data.csv")
+    yCol = "speaker"
+
+    print(df.columns)
+    m = len(df.index)
+    n = len(df.columns)
+    print("n=", n, "m=", m)
+    X, y_dict, speakers = prepare_one_vs_all(df, yCol)
+    print("Speakers:", speakers)
+    print(X)
+
+    input()
+    # TRAIN THE SYSTEM  (20000, 0.0000006)
+    iterations = 200000
+    alpha = 0.01
+
+    weights_dict = {}
+
+    colors = ['blue', 'red', 'green', 'orange', 'purple']
+
+    for idx, speaker in enumerate(speakers):
+        print(f"\nTraining model for speaker: {speaker}")
+        y = y_dict[speaker]
+        w = np.zeros((n, 1))
+        print("Initial Error (J)=", J(w, X, y, m))
+
+        errors_to_plot = []
+        iterations_to_plot = []
+
+        for k in range(iterations):
+
+            if k % 50000 == 0:
+                print(k)
+            error = J(w, X, y, m)
+            if k >= iterations - 100:
+                errors_to_plot.append(error[0][0])
+                iterations_to_plot.append(k)
+            w = GD(w, X, y, m, alpha)
+
+        plt.scatter(iterations_to_plot, errors_to_plot,
+                    color=colors[idx % len(colors)],
+                    label=speaker,
+                    alpha=0.6)
+
+        print("The weights:")
+        print(w)
+        weights_dict[speaker] = w
+
+        final_error = J(w, X, y, m)
+        print("Final J=", final_error)
+
+    print("\nTraining complete for all speakers")
+
+    for speaker in weights_dict:
+        np.save(f"weights/{speaker}.npy", weights_dict[speaker])
+
+    plt.xlabel("Iteration")
+    plt.ylabel("Cost (J)")
+    plt.title("Training Cost Over Time")
+    plt.legend()
+    plt.show()
 
 
-def s_df(df, dropcol, mean_array, std_array):
-    tdf = df.drop(dropcol, axis=1)
-    tdf = ((tdf - mean_array) / std_array)
-    tdf[dropcol] = df[dropcol].values
-    return tdf
+for k in range(5):
+    train_df = pd.read_csv(f"data/folds/train{k}.csv")
+    val_df = pd.read_csv(f"data/folds/val{k}.csv")
+    yCol = "speaker"
 
+    print(train_df.columns)
+    m = len(train_df.index)
+    n = len(train_df.columns)
+    print("n=", n, "m=", m)
+    X, y_dict, speakers = prepare_one_vs_all(train_df, yCol)
+    print("Speakers:", speakers)
+    print(X)
 
-# MAIN
-df = pd.read_csv("data.csv")
-yCol = "speaker"
+    input()
+    # TRAIN THE SYSTEM  (20000, 0.0000006)
+    iterations = 200000
+    alpha = 0.01
 
-mean_array, std_array = get_mean_std(df, yCol)
-s_df = s_df(df, yCol, mean_array, std_array)
+    weights_dict = {}
 
-print(df.columns)
-m = len(df.index)
-n = len(df.columns)
-print("n=", n, "m=", m)
-X, y_dict, speakers = prepare_one_vs_all(s_df, yCol)
-print("Speakers:", speakers)
-print(X)
+    colors = ['blue', 'red', 'green', 'orange', 'purple']
 
-input()
-# TRAIN THE SYSTEM  (20000, 0.0000006)
-iterations = 200000
-alpha = 0.01
+    for idx, speaker in enumerate(speakers):
+        print(f"\nTraining model for speaker: {speaker}")
+        y = y_dict[speaker]
+        w = np.zeros((n, 1))
+        print("Initial Error (J)=", J(w, X, y, m))
 
-weights_dict = {}
+        errors_to_plot = []
+        iterations_to_plot = []
 
-colors = ['blue', 'red', 'green', 'orange', 'purple']
+        for k in range(iterations):
 
-for idx, speaker in enumerate(speakers):
-    print(f"\nTraining model for speaker: {speaker}")
-    y = y_dict[speaker]
-    w = np.zeros((n, 1))
-    print("Initial Error (J)=", J(w, X, y, m))
+            if k % 50000 == 0:
+                print(k)
+            error = J(w, X, y, m)
+            if k >= iterations - 100:
+                errors_to_plot.append(error[0][0])
+                iterations_to_plot.append(k)
+            w = GD(w, X, y, m, alpha)
 
-    errors_to_plot = []
-    iterations_to_plot = []
+        # plt.scatter(iterations_to_plot, errors_to_plot,
+        #             color=colors[idx % len(colors)],
+        #             label=speaker,
+        #             alpha=0.6)
 
-    for k in range(iterations):
+        print("The weights:")
+        print(w)
+        weights_dict[speaker] = w
 
-        if k % 50000 == 0:
-            print(k)
-        error = J(w, X, y, m)
-        if k >= iterations - 100:
-            errors_to_plot.append(error[0][0])
-            iterations_to_plot.append(k)
-        w = GD(w, X, y, m, alpha)
+        final_error = J(w, X, y, m)
+        print("Final J=", final_error)
 
-    plt.scatter(iterations_to_plot, errors_to_plot,
-                color=colors[idx % len(colors)],
-                label=speaker,
-                alpha=0.6)
+    print("\nTraining complete for all speakers")
 
-    print("The weights:")
-    print(w)
-    weights_dict[speaker] = w
+    y_vals = val_df.pop(yCol).to_numpy()
+    X_vals = val_df.to_numpy()
 
-    final_error = J(w, X, y, m)
-    print("Final J=", final_error)
+    # Add bias
+    X_vals = np.insert(X_vals, 0, 1, axis=1)
 
+    # Initialize per-class confusion matrix
+    confusion_matrix = {speaker: {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0} for speaker in speakers}
 
-print("\nTraining complete for all speakers")
+    for idx, row in enumerate(X_vals):
+        predictions = {}
+        for speaker, weights in weights_dict.items():
+            prob = hwX(weights, row)
+            predictions[speaker] = prob
 
-for speaker in weights_dict:
-    np.save(f"weights/{speaker}.npy", weights_dict[speaker])
+        predicted_speaker = max(predictions, key=predictions.get)
+        actual_speaker = y_vals[idx]
 
-plt.xlabel("Iteration")
-plt.ylabel("Cost (J)")
-plt.title("Training Cost Over Time")
-plt.legend()
-plt.show()
+        print(f"Predicted: {predicted_speaker}, Actual: {actual_speaker}")
+
+        for speaker in speakers:
+            if predicted_speaker == speaker and actual_speaker == speaker:
+                confusion_matrix[speaker]['tp'] += 1
+            elif predicted_speaker != speaker and actual_speaker != speaker:
+                confusion_matrix[speaker]['tn'] += 1
+            elif predicted_speaker == speaker and actual_speaker != speaker:
+                confusion_matrix[speaker]['fp'] += 1
+            elif predicted_speaker != speaker and actual_speaker == speaker:
+                confusion_matrix[speaker]['fn'] += 1
+
+    for speaker in speakers:
+        cm = confusion_matrix[speaker]
+        tp, tn, fp, fn = cm['tp'], cm['tn'], cm['fp'], cm['fn']
+
+        accuracy, precision, recall, f1 = calc_stats(tp, tn, fp, fn)
+
+        print(f"\n{speaker}:")
+        print(f"  TP: {tp}, TN: {tn}, FP: {fp}, FN: {fn}")
+        print(f"  Accuracy: {accuracy}%")
+        print(f"  Precision: {precision}%")
+        print(f"  Recall: {recall}%")
+        print(f"  F1-Score: {f1}")

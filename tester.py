@@ -13,25 +13,14 @@ def hwX(w, X):
     return 1 / (1 + np.exp(-X @ w))
 
 
-def get_mean_std(df, dropcol):
-    tdf = df.drop(dropcol, axis=1)
-    means = tdf.mean()
-    stds = tdf.std()
-    return means, stds
-
-
-def s_df(df, dropcol, mean_array, std_array):
-    tdf = df.drop(dropcol, axis=1)
-    tdf = ((tdf - mean_array) / std_array)
-    tdf[dropcol] = df[dropcol].values
-    return tdf
-
-
 def main():
     yCol = "speaker"
-    training_df = pd.read_csv("data.csv")
+    training_df = pd.read_csv("data/data.csv")
 
-    means, stds = get_mean_std(training_df, yCol)
+    # Load normalization parameters from saved file
+    norm_params = np.load("data/normalization_params.npz")
+    means = norm_params['means']
+    stds = norm_params['stds']
 
     speakers = training_df["speaker"].unique()
     print(f"Available speakers: {speakers}")
@@ -57,7 +46,7 @@ def main():
         print(f"Error extracting features: {e}")
         return
 
-    normalized_features = ((features - means.values) / stds.values)
+    normalized_features = ((features - means) / stds)
     normalized_features = np.array(normalized_features).reshape(1, -1)
     array_of_1s = np.ones([1, 1])
 
