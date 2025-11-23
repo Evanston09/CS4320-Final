@@ -52,11 +52,9 @@ def prepare_one_vs_all(df, yCol):
 def train(df, yCol, iter, alpha):
     X, y_dict, speakers = prepare_one_vs_all(df, yCol)
     print("Speakers:", speakers)
-    input()
 
     weights_dict = {}
     final_j = {}
-    
     colors = ['blue', 'red', 'green', 'orange', 'purple']
 
     for idx, speaker in enumerate(speakers):
@@ -101,7 +99,7 @@ def train(df, yCol, iter, alpha):
     plt.ylabel("Cost (J)")
     plt.title("Training Cost Over Time")
     plt.legend()
-    plt.show()
+    plt.savefig(f'data/graphs/{iter}_{alpha}.png')
 
     return weights_dict, final_j
 
