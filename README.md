@@ -11,10 +11,10 @@ Speaker identification system using logistic regression implemented from scratch
 
 ## Quick Start
 
-1. Install dependencies:
-   ```bash
-  uv run main.py 
-   ```
+1. Run File:
+```bash
+uv run main.py 
+```
 
 2. Menu options:
    - **[M]** Modify speakers - Add or manage speaker profiles
