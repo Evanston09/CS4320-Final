@@ -197,11 +197,3 @@ def evaluate(audio_file, speakers):
         print(f"{speaker}: {prob:.4f} ({prob*100:.2f}%)")
 
     return predictions
-
-    print(predictions)
-    predicted_speaker = max(predictions, key=predictions.get)
-    confidence = predictions[predicted_speaker]
-
-    print("\nResult")
-    print(f"Predicted speaker: {predicted_speaker}")
-    print(f"Confidence: {confidence*100:.2f}%")

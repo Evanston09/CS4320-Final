@@ -1,19 +1,14 @@
 import wave
-from reset_files import reset
+from clean_processed_data import reset
 import numpy as np
 import os
 import sys
 import pandas as pd
 import threading
-
 from audio_processing import process_dir
-import io
 import numpy as np
 import torch
 torch.set_num_threads(1)
-import torchaudio
-import matplotlib
-import matplotlib.pylab as plt
 import pyaudio
 from utils import train, evaluate
 
@@ -158,8 +153,23 @@ def main():
         repo_or_dir="snakers4/silero-vad", model="silero_vad", force_reload=True
     )
 
-    print("Welcome to the trainer for CS4320 Final Project")
-    print("By: Evan Kim")
+    print("""
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║   ██████╗███████╗██╗  ██╗██████╗ ██████╗  ██████╗             ║
+║  ██╔════╝██╔════╝██║  ██║╚════██╗╚════██╗██╔═████╗            ║
+║  ██║     ███████╗███████║ █████╔╝ █████╔╝██║██╔██║            ║
+║  ██║     ╚════██║╚════██║ ╚═══██╗██╔═══╝ ████╔╝██║            ║
+║  ╚██████╗███████║     ██║██████╔╝███████╗╚██████╔╝            ║
+║   ╚═════╝╚══════╝     ╚═╝╚═════╝ ╚══════╝ ╚═════╝             ║
+║                                                               ║
+║              Voice Activity Detection Trainer                 ║
+║                     Final Project                             ║
+║                                                               ║
+║                   Created by: Evan Kim                        ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+    """)
 
     print("Speakers:", get_speakers())
 
