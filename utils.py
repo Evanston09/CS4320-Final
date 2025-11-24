@@ -1,13 +1,14 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from audio_processing import extract_features
 
 
 def calc_stats(tp, tn, fp, fn):
-    accuracy = (tp + tn)/(tn+tp+fn+fp)
-    precision = (tp)/(tp+fp)
-    recall = (tp)/(tp+fn)
-    f1 = (2/((1/precision)+(1/recall)))
+    accuracy = (tp + tn) / (tn + tp + fn + fp)
+    precision = (tp) / (tp + fp)
+    recall = (tp) / (tp + fn)
+    f1 = 2 / ((1 / precision) + (1 / recall))
     return accuracy, precision, recall, f1
 
 
@@ -18,12 +19,12 @@ def hwX(w, X):
 
 # Average cost over all training data
 def J(w, X, y, m):
-    H = (1/(1+np.exp(-X @ w)))
+    H = 1 / (1 + np.exp(-X @ w))
     eps = 1e-10
     H = np.clip(H, eps, 1 - eps)
-    cost = -(y * np.log(H)) - (1-y) * np.log(1-H)
+    cost = -(y * np.log(H)) - (1 - y) * np.log(1 - H)
     xm1 = np.ones((1, m))
-    return (1/m) * (xm1 @ cost)
+    return (1 / m) * (xm1 @ cost)
 
 
 # Gradient Descent
@@ -55,7 +56,7 @@ def train(df, yCol, iter, alpha):
 
     weights_dict = {}
     final_j = {}
-    colors = ['blue', 'red', 'green', 'orange', 'purple']
+    colors = ["blue", "red", "green", "orange", "purple"]
 
     for idx, speaker in enumerate(speakers):
         print(df.columns)
@@ -80,10 +81,13 @@ def train(df, yCol, iter, alpha):
                 iterations_to_plot.append(k)
             w = GD(w, X, y, m, alpha)
 
-        plt.scatter(iterations_to_plot, errors_to_plot,
-                    color=colors[idx % len(colors)],
-                    label=speaker,
-                    alpha=0.6)
+        plt.scatter(
+            iterations_to_plot,
+            errors_to_plot,
+            color=colors[idx % len(colors)],
+            label=speaker,
+            alpha=0.6,
+        )
 
         print("The weights:")
         print(w)
@@ -99,7 +103,7 @@ def train(df, yCol, iter, alpha):
     plt.ylabel("Cost (J)")
     plt.title("Training Cost Over Time")
     plt.legend()
-    plt.savefig(f'data/graphs/{iter}_{alpha}.png')
+    plt.savefig(f"data/graphs/{iter}_{alpha}.png")
 
     return weights_dict, final_j
 
@@ -110,7 +114,9 @@ def validate(val_df, weights_dict, yCol):
 
     X_vals = np.insert(X_vals, 0, 1, axis=1)
 
-    confusion_matrix = {speaker: {'tp': 0, 'tn': 0, 'fp': 0, 'fn': 0} for speaker in weights_dict}
+    confusion_matrix = {
+        speaker: {"tp": 0, "tn": 0, "fp": 0, "fn": 0} for speaker in weights_dict
+    }
 
     for idx, row in enumerate(X_vals):
         predictions = {}
@@ -125,24 +131,77 @@ def validate(val_df, weights_dict, yCol):
 
         for speaker in weights_dict:
             if predicted_speaker == speaker and actual_speaker == speaker:
-                confusion_matrix[speaker]['tp'] += 1
+                confusion_matrix[speaker]["tp"] += 1
             elif predicted_speaker != speaker and actual_speaker != speaker:
-                confusion_matrix[speaker]['tn'] += 1
+                confusion_matrix[speaker]["tn"] += 1
             elif predicted_speaker == speaker and actual_speaker != speaker:
-                confusion_matrix[speaker]['fp'] += 1
+                confusion_matrix[speaker]["fp"] += 1
             elif predicted_speaker != speaker and actual_speaker == speaker:
-                confusion_matrix[speaker]['fn'] += 1
+                confusion_matrix[speaker]["fn"] += 1
 
     for speaker in weights_dict:
         cm = confusion_matrix[speaker]
-        tp, tn, fp, fn = cm['tp'], cm['tn'], cm['fp'], cm['fn']
+        tp, tn, fp, fn = cm["tp"], cm["tn"], cm["fp"], cm["fn"]
 
         accuracy, precision, recall, f1 = calc_stats(tp, tn, fp, fn)
 
-        confusion_matrix[speaker]['accuracy'] = accuracy
-        confusion_matrix[speaker]['precision'] = precision
-        confusion_matrix[speaker]['recall'] = recall
-        confusion_matrix[speaker]['f1'] = f1
+        confusion_matrix[speaker]["accuracy"] = accuracy
+        confusion_matrix[speaker]["precision"] = precision
+        confusion_matrix[speaker]["recall"] = recall
+        confusion_matrix[speaker]["f1"] = f1
 
     return confusion_matrix
 
+
+def evaluate(audio_file, speakers):
+    # Load normalization parameters from saved file
+    norm_params = np.load("data/normalization_params.npz")
+    means = norm_params["means"]
+    stds = norm_params["stds"]
+
+    print(f"Available speakers: {speakers}")
+
+    weights_dict = {}
+    for speaker in speakers:
+        try:
+            weights_dict[speaker] = np.load(f"weights/{speaker}.npy")
+            print(f"Loaded weights for speaker: {speaker}")
+        except FileNotFoundError:
+            print(f"Warning: Weight file {speaker}.npy not found")
+
+    if not weights_dict:
+        print("Error: No weight files found. Please train the model first.")
+        return
+
+    audio_file = input("Enter the path to the audio file: ")
+
+    print(f"\nExtracting features from: {audio_file}")
+    try:
+        features = extract_features(audio_file)
+    except Exception as e:
+        print(f"Error extracting features: {e}")
+        return
+
+    normalized_features = (features - means) / stds
+    normalized_features = np.array(normalized_features).reshape(1, -1)
+    array_of_1s = np.ones([1, 1])
+
+    normalized_features = np.insert(normalized_features, 0, array_of_1s, axis=1)
+
+    print("\nPredictions")
+    predictions = {}
+
+    for speaker, weights in weights_dict.items():
+        prob = hwX(weights, normalized_features)[0][0]
+        predictions[speaker] = prob
+        print(f"{speaker}: {prob:.4f} ({prob*100:.2f}%)")
+
+    return predictions
+
+    print(predictions)
+    predicted_speaker = max(predictions, key=predictions.get)
+    confidence = predictions[predicted_speaker]
+
+    print("\nResult")
+    print(f"Predicted speaker: {predicted_speaker}")
+    print(f"Confidence: {confidence*100:.2f}%")

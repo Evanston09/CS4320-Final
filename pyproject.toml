@@ -9,6 +9,7 @@ dependencies = [
     "matplotlib>=3.10.7",
     "numpy>=2.3.4",
     "pandas>=2.3.3",
+    "pyaudio>=0.2.14",
     "pydub>=0.25.1",
     "silero-vad>=6.2.0",
     "torchcodec>=0.8.1",
