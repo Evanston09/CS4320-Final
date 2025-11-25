@@ -1,6 +1,6 @@
 # CS4320 Final: Speaker Identification
 
-Speaker identification system using logistic regression implemented from scratch without ML-specific libraries (e.g., scikit-learn).
+Speaker identification system using logistic regression and gradient descent implemented from scratch without ML-specific libraries (e.g., scikit-learn).
 
 ## Features
 
