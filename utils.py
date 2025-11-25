@@ -153,27 +153,15 @@ def validate(val_df, weights_dict, yCol):
     return confusion_matrix
 
 
-def evaluate(audio_file, speakers):
+def evaluate(audio_file, weights_dict):
     # Load normalization parameters from saved file
     norm_params = np.load("data/normalization_params.npz")
     means = norm_params["means"]
     stds = norm_params["stds"]
 
-    print(f"Available speakers: {speakers}")
-
-    weights_dict = {}
-    for speaker in speakers:
-        try:
-            weights_dict[speaker] = np.load(f"weights/{speaker}.npy")
-            print(f"Loaded weights for speaker: {speaker}")
-        except FileNotFoundError:
-            print(f"Warning: Weight file {speaker}.npy not found")
-
     if not weights_dict:
-        print("Error: No weight files found. Please train the model first.")
+        print("Error: No weights provided. Please train the model first.")
         return
-
-    audio_file = input("Enter the path to the audio file: ")
 
     print(f"\nExtracting features from: {audio_file}")
     try:

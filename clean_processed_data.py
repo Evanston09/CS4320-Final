@@ -1,7 +1,8 @@
 import os
+import shutil
 
 
-def reset(base_dir):
+def reset_processed(base_dir):
     directories = os.listdir(path=base_dir)
 
     for directory in directories:
@@ -16,5 +17,9 @@ def reset(base_dir):
             os.remove(os.path.join(processed_dir, entry))
 
 
+def reset_speakers(base_dir):
+    shutil.rmtree(os.path.join(base_dir, "speakers"))
+
+
 if __name__ == "__main__":
-    reset("data/speakers")
+    reset_processed("data/speakers")
