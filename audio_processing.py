@@ -41,18 +41,14 @@ def clean_audio(file_dir, output_dir, format="m4a", segment_length_ms=5000):
 # Get MFCC, delta MFCC, Pitch stats, Centroid, rolloff
 def extract_features(file_name):
     y, sr = librosa.load(file_name)
-    mfccs = librosa.feature.mfcc(y=y, sr=sr)
+    mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
 
     mfcc_mean = np.mean(mfccs, axis=1)
     mfcc_std = np.std(mfccs, axis=1)
-    mfcc_min = np.min(mfccs, axis=1)
-    mfcc_max = np.max(mfccs, axis=1)
 
     delta_mfccs = librosa.feature.delta(mfccs)
     delta_mfcc_mean = np.mean(delta_mfccs, axis=1)
     delta_mfcc_std = np.std(delta_mfccs, axis=1)
-    delta_mfcc_min = np.min(delta_mfccs, axis=1)
-    delta_mfcc_max = np.max(delta_mfccs, axis=1)
 
     f0, voiced_flags, _ = librosa.pyin(
         y=y,
@@ -64,29 +60,25 @@ def extract_features(file_name):
 
     f0_mean = np.mean(f0_voiced)
     f0_std = np.std(f0_voiced)
-    f0_min = np.min(f0_voiced)
-    f0_max = np.max(f0_voiced)
-
-    centroid = librosa.feature.spectral_centroid(y=y, sr=sr)
-    centroid_mean = np.mean(centroid)
-    centroid_std = np.std(centroid)
-
-    rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
-    rolloff_mean = np.mean(rolloff)
-    rolloff_std = np.std(rolloff)
+    # f0_min = np.min(f0_voiced)
+    # f0_max = np.max(f0_voiced)
+    #
+    # centroid = librosa.feature.spectral_centroid(y=y, sr=sr)
+    # centroid_mean = np.mean(centroid)
+    # centroid_std = np.std(centroid)
+    #
+    # rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)
+    # rolloff_mean = np.mean(rolloff)
+    # rolloff_std = np.std(rolloff)
 
     features = []
     features.extend(mfcc_mean)
     features.extend(mfcc_std)
-    features.extend(mfcc_min)
-    features.extend(mfcc_max)
     features.extend(delta_mfcc_mean)
     features.extend(delta_mfcc_std)
-    features.extend(delta_mfcc_min)
-    features.extend(delta_mfcc_max)
-    features.extend([f0_mean, f0_std, f0_min, f0_max])
-    features.extend([centroid_mean, centroid_std])
-    features.extend([rolloff_mean, rolloff_std])
+    features.extend([f0_mean, f0_std])
+    # features.extend([centroid_mean, centroid_std])
+    # features.extend([rolloff_mean, rolloff_std])
 
     return features
 
@@ -105,21 +97,21 @@ def s_df(df, dropcol, mean_array, std_array):
     return tdf
 
 
-def get_feature_names(n_mfcc=20):
+def get_feature_names(n_mfcc=13):
     names = []
     for i in range(n_mfcc):
         names.extend([
             f'mfcc_{i}_mean', f'mfcc_{i}_std',
-            f'mfcc_{i}_min', f'mfcc_{i}_max'
+            # f'mfcc_{i}_min', f'mfcc_{i}_max'
         ])
     for i in range(n_mfcc):
         names.extend([
             f'delta_mfcc_{i}_mean', f'delta_mfcc_{i}_std',
-            f'delta_mfcc_{i}_min', f'delta_mfcc_{i}_max'
+            # f'delta_mfcc_{i}_min', f'delta_mfcc_{i}_max'
         ])
-    names.extend(['f0_mean', 'f0_std', 'f0_min', 'f0_max'])
-    names.extend(['centroid_mean', 'centroid_std'])
-    names.extend(['rolloff_mean', 'rolloff_std'])
+    names.extend(['f0_mean', 'f0_std'])
+    # names.extend(['centroid_mean', 'centroid_std'])
+    # names.extend(['rolloff_mean', 'rolloff_std'])
     names.append('speaker')
 
     return names
@@ -187,7 +179,7 @@ def process_dir(base_dir):
             features.append(speaker_name)
             data.append(features)
 
-    df = pd.DataFrame(data, columns=get_feature_names())
+    df = pd.DataFrame(data, columns=get_feature_names(n_mfcc=13))
 
     means, stds = get_mean_std(df, 'speaker')
     df_standardized = s_df(df, 'speaker', means, stds)
