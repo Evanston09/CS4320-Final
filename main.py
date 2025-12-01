@@ -11,12 +11,31 @@ import torch
 torch.set_num_threads(1)
 import pyaudio
 from utils import train, evaluate
+import json
 
 
-ITER = 1000000
-ALPHA = 0.1
+ITER = 100000
+ALPHA = 0.01
 
-SPEECH = "When the sunlight strikes raindrops in the air, they act as a prism and form a rainbow. The rainbow is a division of white light into many beautiful colors. These take the shape of a long round arch, with its path high above, and its two ends apparently beyond the horizon. There is , according to legend, a boiling pot of gold at one end. People look, but no one ever finds it. When a man looks for something beyond his reach, his friends say he is looking for the pot of gold at the end of the rainbow. Throughout the centuries people have explained the rainbow in various ways. Some have accepted it as a miracle without physical explanation. To the Hebrews it was a token that there would be no more universal floods. The Greeks used to imagine that it was a sign from the gods to foretell war or heavy rain. The Norsemen considered the rainbow as a bridge over which the gods passed from earth to their home in the sky. Others have tried to explain the phenomenon physically. Aristotle thought that the rainbow was caused by reflection of the sun's rays by the rain. Since then physicists have found that it is not reflection, but refraction by the raindrops which causes the rainbows. Many complicated ideas about the rainbow have been formed. The difference in the rainbow depends considerably upon the size of the drops, and the width of the colored band increases as the size of the drops increases. The actual primary rainbow observed is said to be the effect of super-imposition of a number of bows. If the red of the second bow falls upon the green of the first, the result is to give a bow with an abnormally wide yellow band, since red and green light when mixed form yellow. This is a very common type of bow, one showing mainly red and yellow, with little or no green or blue."
+SPEECH = """When the sunlight strikes raindrops in the air, they act as a prism and form a rainbow.
+The rainbow is a division of white light into many beautiful colors.
+These take the shape of a long round arch, with its path high above, and its two ends apparently beyond the horizon.
+There is, according to legend, a boiling pot of gold at one end.
+People look, but no one ever finds it.
+When a man looks for something beyond his reach, his friends say he is looking for the pot of gold at the end of the rainbow.
+Throughout the centuries people have explained the rainbow in various ways.
+Some have accepted it as a miracle without physical explanation.
+To the Hebrews it was a token that there would be no more universal floods.
+The Greeks used to imagine that it was a sign from the gods to foretell war or heavy rain.
+The Norsemen considered the rainbow as a bridge over which the gods passed from earth to their home in the sky.
+Others have tried to explain the phenomenon physically.
+Aristotle thought that the rainbow was caused by reflection of the sun's rays by the rain.
+Since then physicists have found that it is not reflection, but refraction by the raindrops which causes the rainbows.
+Many complicated ideas about the rainbow have been formed.
+The difference in the rainbow depends considerably upon the size of the drops, and the width of the colored band increases as the size of the drops increases.
+The actual primary rainbow observed is said to be the effect of super-imposition of a number of bows.
+If the red of the second bow falls upon the green of the first, the result is to give a bow with an abnormally wide yellow band, since red and green light when mixed form yellow.
+This is a very common type of bow, one showing mainly red and yellow, with little or no green or blue."""
 
 
 def get_speakers():
@@ -31,6 +50,30 @@ def get_speakers():
         speakers = []
 
     return speakers
+
+
+def load_accuracy_stats():
+    stats_file = "data/accuracy_stats.json"
+    if os.path.exists(stats_file):
+        with open(stats_file, "r") as f:
+            return json.load(f)
+    return {"correct": 0, "total": 0}
+
+
+def save_accuracy_stats(stats):
+    stats_file = "data/accuracy_stats.json"
+    os.makedirs("data", exist_ok=True)
+    with open(stats_file, "w") as f:
+        json.dump(stats, f, indent=2)
+
+
+def display_accuracy_stats():
+    stats = load_accuracy_stats()
+    if stats["total"] == 0:
+        print("No predictions recorded yet.")
+    else:
+        accuracy = (stats["correct"] / stats["total"]) * 100
+        print(f"Accuracy: {stats['correct']}/{stats['total']} ({accuracy:.2f}%)")
 
 
 def int2float(sound):
@@ -144,6 +187,21 @@ def detect_realtime(model, weights_dict):
             print("Evaluating...")
             evaluate("temp.wav", weights_dict)
 
+            # Ask for feedback
+            feedback = input("Was the prediction correct? (y/n): ").lower().strip()
+            stats = load_accuracy_stats()
+            stats["total"] += 1
+            if feedback == "y":
+                stats["correct"] += 1
+                print("Recorded as correct.")
+            else:
+                print("Recorded as incorrect.")
+            save_accuracy_stats(stats)
+
+            # Display current accuracy
+            accuracy = (stats["correct"] / stats["total"]) * 100
+            print(f"Current accuracy: {stats['correct']}/{stats['total']} ({accuracy:.2f}%)")
+
             # Reset after evaluation to prevent repeated evaluations
             data.clear()
             length = 0
@@ -178,7 +236,7 @@ def main():
 
     while True:
 
-        menu = input("[M]odify speakers [T]rain Model [R]un Model [Q]uit: ").lower()
+        menu = input("[M]odify speakers [T]rain Model [R]un Model [S]tats [Q]uit: ").lower()
 
         if menu == "m":
             while True:
@@ -237,6 +295,9 @@ def main():
                 continue
 
             detect_realtime(model, weights_dict)
+
+        elif menu == "s":
+            display_accuracy_stats()
 
         elif menu == "q":
             break

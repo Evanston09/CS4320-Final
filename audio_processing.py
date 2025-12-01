@@ -44,11 +44,11 @@ def extract_features(file_name):
     mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
 
     mfcc_mean = np.mean(mfccs, axis=1)
-    mfcc_std = np.std(mfccs, axis=1)
+    # mfcc_std = np.std(mfccs, axis=1)
 
     delta_mfccs = librosa.feature.delta(mfccs)
     delta_mfcc_mean = np.mean(delta_mfccs, axis=1)
-    delta_mfcc_std = np.std(delta_mfccs, axis=1)
+    # delta_mfcc_std = np.std(delta_mfccs, axis=1)
 
     f0, voiced_flags, _ = librosa.pyin(
         y=y,
@@ -73,9 +73,9 @@ def extract_features(file_name):
 
     features = []
     features.extend(mfcc_mean)
-    features.extend(mfcc_std)
+    # features.extend(mfcc_std)
     features.extend(delta_mfcc_mean)
-    features.extend(delta_mfcc_std)
+    # features.extend(delta_mfcc_std)
     features.extend([f0_mean, f0_std])
     # features.extend([centroid_mean, centroid_std])
     # features.extend([rolloff_mean, rolloff_std])
@@ -101,12 +101,14 @@ def get_feature_names(n_mfcc=13):
     names = []
     for i in range(n_mfcc):
         names.extend([
-            f'mfcc_{i}_mean', f'mfcc_{i}_std',
+            f'mfcc_{i}_mean', 
+            # f'mfcc_{i}_std',
             # f'mfcc_{i}_min', f'mfcc_{i}_max'
         ])
     for i in range(n_mfcc):
         names.extend([
-            f'delta_mfcc_{i}_mean', f'delta_mfcc_{i}_std',
+            f'delta_mfcc_{i}_mean', 
+            # f'delta_mfcc_{i}_std',
             # f'delta_mfcc_{i}_min', f'delta_mfcc_{i}_max'
         ])
     names.extend(['f0_mean', 'f0_std'])
